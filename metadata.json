@@ -1,0 +1,7 @@
+{
+  "name": "Copy of BidMaster - Premium Auction Platform",
+  "description": "A comprehensive auction and bidding application featuring dedicated user and admin modules, real-time bid tracking, product verification workflows, and personal winner dashboards.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
