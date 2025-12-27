@@ -1,32 +1,40 @@
-
 import { Product, User, UserRole, ProductStatus, Bid } from '../types';
-
-/**
- * DB Service: Simulates a backend with persistence.
- * This is designed for beginners to understand how data flows
- * between a frontend and a (simulated) database.
- */
 
 const STORAGE_KEY_PRODUCTS = 'bidmaster_products';
 const STORAGE_KEY_USERS = 'bidmaster_users';
 const STORAGE_KEY_AUTH = 'bidmaster_auth';
 
 export const dbService = {
-  // --- Auth & Users ---
   getUsers: (): User[] => {
     const data = localStorage.getItem(STORAGE_KEY_USERS);
-    return data ? JSON.parse(data) : [];
+    let users: User[] = data ? JSON.parse(data) : [];
+    
+    // Always ensure the Super Admin exists in the list
+    const adminEmail = 'admin@bidmaster.com';
+    if (!users.find(u => u.email === adminEmail)) {
+      const admin: User = {
+        id: 'admin-1',
+        name: 'Super Admin',
+        email: adminEmail,
+        role: UserRole.ADMIN,
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
+      };
+      users.push(admin);
+      localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+    }
+    return users;
   },
 
   register: (user: User) => {
     const users = dbService.getUsers();
+    if (users.find(u => u.email === user.email)) return; // Prevent duplicates
     users.push(user);
     localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
   },
 
   login: (email: string): User | null => {
     const users = dbService.getUsers();
-    const user = users.find(u => u.email === email);
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (user) {
       localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(user));
       return user;
@@ -43,12 +51,10 @@ export const dbService = {
     return data ? JSON.parse(data) : null;
   },
 
-  // --- Products ---
   getProducts: (): Product[] => {
     const data = localStorage.getItem(STORAGE_KEY_PRODUCTS);
     const products: Product[] = data ? JSON.parse(data) : [];
     
-    // Auto-update status based on time
     const now = Date.now();
     let updated = false;
     const processed = products.map(p => {
@@ -95,7 +101,7 @@ export const dbService = {
     const product = products.find(p => p.id === productId);
     if (!product) return null;
 
-    if (amount <= product.currentPrice) return { error: "Bid must be higher than current price" };
+    if (amount <= product.currentPrice) return { error: `Bid must be higher than $${product.currentPrice}` };
 
     const newBid: Bid = {
       id: Math.random().toString(36).substr(2, 9),
